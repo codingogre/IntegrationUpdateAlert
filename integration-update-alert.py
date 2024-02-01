@@ -28,18 +28,23 @@ def get_packages():
         return r.json()
 
 
-def notify():
-    print("notified")
+def notify(upgrade_candidates: list):
+    print(upgrade_candidates)
 
 
 def main():
+    upgrade_candidates = []
     packages = get_packages()
     for package in packages['items']:
         if 'installationInfo' in package.keys():
             if version.parse(package['installationInfo']['version']) < version.parse(package['version']):
                 print(f'Upgrade available for package: {colored(package["name"], "cyan")}\n'
                       f'  Latest version: {colored(package["version"], "green")}\n'
-                      f'  Current version: {package["installationInfo"]["version"]}')
+                      f'  Installed version: {package["installationInfo"]["version"]}')
+                upgrade_candidates.append({'name': package["name"],
+                                           'latest_version': package["version"],
+                                           'installed_version': package["installationInfo"]["version"]})
+    notify(upgrade_candidates)
 
 
 if __name__ == "__main__":
