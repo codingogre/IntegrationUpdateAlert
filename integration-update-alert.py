@@ -1,9 +1,18 @@
-import json
-from dotenv import load_dotenv
+import getopt
+import sys
+import yaml
 import os
 import requests
-from packaging import version
+from dotenv import load_dotenv
+from packaging.version import parse, InvalidVersion
 from termcolor import colored
+
+
+# Create class so that YAML dumper doesn't create references <eyeroll>
+class NoAliasDumper(yaml.SafeDumper):
+    def ignore_aliases(self, data):
+        return True
+
 
 # Load configuration
 load_dotenv(override=True)
@@ -28,24 +37,60 @@ def get_packages():
         return r.json()
 
 
+def get_changelog(pkg_name: str, latest_version: str, current_version: str):
+    url = f"{endpoint}/api/fleet/epm/packages/{pkg_name}/{latest_version}/changelog.yml"
+    r = s.get(url=url, headers=headers)
+    if r.status_code == 200:
+        changelog = yaml.load(r.text, Loader=yaml.FullLoader)
+        changelog_diff = []
+        for change in changelog:
+            try:
+                if parse(change['version']) > parse(current_version):
+                    changelog_diff.append(change)
+            except InvalidVersion:
+                continue
+        return changelog_diff
+
+
 def notify(upgrade_candidates: list):
-    print(upgrade_candidates)
+    #print(upgrade_candidates)
+    return
 
 
-def main():
+def main(argv):
+    usage = 'integration-update-alert.py [-c] [--changelog]'
+    changelog_flag = False
+    try:
+        opts, args = getopt.getopt(argv, ":hc", ["changelog"])
+    except getopt.GetoptError:
+        print(usage)
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print(usage)
+            sys.exit()
+        elif opt in ("-c", "--changelog"):
+            changelog_flag = True
+
     upgrade_candidates = []
     packages = get_packages()
     for package in packages['items']:
         if 'installationInfo' in package.keys():
-            if version.parse(package['installationInfo']['version']) < version.parse(package['version']):
-                print(f'Upgrade available for package: {colored(package["name"], "cyan")}\n'
-                      f'  Latest version: {colored(package["version"], "green")}\n'
-                      f'  Installed version: {package["installationInfo"]["version"]}')
-                upgrade_candidates.append({'name': package["name"],
-                                           'latest_version': package["version"],
-                                           'installed_version': package["installationInfo"]["version"]})
+            cur_ver = package["installationInfo"]["version"]
+            latest_ver = package["version"]
+            name = package["name"]
+            if parse(cur_ver) < parse(latest_ver):
+                changelog = get_changelog(pkg_name=name, latest_version=latest_ver, current_version=cur_ver)
+                p = {'name': name, 'latest_version': latest_ver, 'installed_version': cur_ver}
+                print(f'Upgrade available for package: {colored(name, "cyan")}\n'
+                      f'Latest version: {colored(latest_ver, "green")}\n'
+                      f'Installed version: {cur_ver}')
+                if changelog_flag:
+                    print(f'Changelog:\n{yaml.dump(changelog, allow_unicode=True, default_flow_style=False, sort_keys=False, Dumper=NoAliasDumper)}\n')
+                    p['changelog'] = changelog
+                upgrade_candidates.append(p)
     notify(upgrade_candidates)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
