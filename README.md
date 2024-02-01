@@ -1,4 +1,4 @@
-## Python script that uses the [Kibana Fleet APIs](https://www.elastic.co/guide/en/fleet/current/fleet-apis.html) to find out of date packages (Integrations) and prints them to a terminal.
+## Python script that uses the [Kibana Fleet APIs](https://www.elastic.co/guide/en/fleet/current/fleet-apis.html) to find out of date packages (Integrations) and prints them to a terminal.  It also has a stubbed out notification function for you to implement where you want the notifications sent.
 
 ### Here is a sample:
 <img width="690" alt="integration-update-alert-terminal-screenshot" src="https://github.com/codingogre/IntegrationUpdateAlert/assets/2017420/bf729be3-f508-4108-a929-d129926d7a46">
