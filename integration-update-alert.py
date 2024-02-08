@@ -53,7 +53,7 @@ def get_changelog(pkg_name: str, latest_version: str, current_version: str):
 
 
 def notify(upgrade_candidates: list):
-    #print(upgrade_candidates)
+    # print(upgrade_candidates)
     return
 
 
@@ -80,12 +80,12 @@ def main(argv):
             latest_ver = package["version"]
             name = package["name"]
             if parse(cur_ver) < parse(latest_ver):
-                changelog = get_changelog(pkg_name=name, latest_version=latest_ver, current_version=cur_ver)
                 p = {'name': name, 'latest_version': latest_ver, 'installed_version': cur_ver}
                 print(f'Upgrade available for package: {colored(name, "cyan")}\n'
                       f'Latest version: {colored(latest_ver, "green")}\n'
                       f'Installed version: {cur_ver}')
                 if changelog_flag:
+                    changelog = get_changelog(pkg_name=name, latest_version=latest_ver, current_version=cur_ver)
                     print(f'Changelog:\n{yaml.dump(changelog, allow_unicode=True, default_flow_style=False, sort_keys=False, Dumper=NoAliasDumper)}\n')
                     p['changelog'] = changelog
                 upgrade_candidates.append(p)
