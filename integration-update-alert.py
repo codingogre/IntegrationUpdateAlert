@@ -58,10 +58,10 @@ def notify(upgrade_candidates: list):
 
 
 def main(argv):
-    usage = 'integration-update-alert.py [-c] [--changelog]'
+    usage = f'{argv[0]} [-c] [--changelog]'
     changelog_flag = False
     try:
-        opts, args = getopt.getopt(argv, ":hc", ["changelog"])
+        opts, args = getopt.getopt(argv[1:], ":hc", ["changelog"])
     except getopt.GetoptError:
         print(usage)
         sys.exit(2)
@@ -93,4 +93,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main(sys.argv)
